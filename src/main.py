@@ -9,7 +9,8 @@ VIEW_WIDTH = 800
 VIEW_HEIGHT = 600
 ITEMS: Dict[str, set[str]] = {
     "vertices": set(),
-    "edges": set()
+    "edges": set(),
+    "selected": set()
 }
 
 # help variables
@@ -74,8 +75,12 @@ def __mouse_click_callback(sender: str, data):
 
 def __vert_btn_callback(sender: str, data):
     print(f"[Vert Btn] Sender: {sender}, Data: {data}")
-    dpg.set_value("val:selected", sender.split(":")[1])
-    print(f"[Selected] {dpg.get_value('val:selected')}")
+    if (selected := sender.split(":")[1]) not in list(ITEMS["selected"]):
+        ITEMS["selected"].add(selected)
+    else:
+        ITEMS["selected"].remove(selected)
+    print(f"Selection: {ITEMS['selected']}")
+    __update()
 
 def __reset_graph_callback(sender, data):
     GRAPH.clear()
@@ -83,9 +88,10 @@ def __reset_graph_callback(sender, data):
 
 def __remove_btn_callback(sender: str, data):
     print(f"[Remove Btn] Sender: {sender}, Data: {data}")
-    if (selected := dpg.get_value("val:selected")) != None:
-        print(f"Trying to remove {selected}")
-        GRAPH.remove_vert(selected)
+    if len(selection := ITEMS["selected"]) > 0:
+        print(f"Sel: {selection}")
+        for vert_key in selection:
+            GRAPH.remove_vert(vert_key)
         __update()
 
 def __update():
@@ -98,6 +104,9 @@ def __update():
             ITEMS["vertices"].remove(vert_key)
             dpg.delete_item(f"vert:{vert_key}")
             dpg.delete_item(f"btn:{vert_key}")
+            ITEMS["selected"].remove(vert_key)
+        if vert_key in ITEMS["selected"]:
+            dpg.configure_item(f"vert:{vert_key}", fill=(255, 0, 0, 255))
 
 def run():
     dpg.start_dearpygui()
