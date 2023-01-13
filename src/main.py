@@ -20,7 +20,7 @@ def init():
     dpg.create_context()
     __init_view()
     __init_values()
-    __init_input()
+    __init_handlers()
 
 def __init_view():
     dpg.create_viewport(title="Graph Tool", width=VIEW_WIDTH, height=VIEW_HEIGHT)
@@ -37,6 +37,9 @@ def __init_view():
     ):
         with dpg.menu_bar():
             dpg.add_menu(tag="menu:vertices", label="Vertices")
+            dpg.add_text(f"Selected: {dpg.get_value('val:selected')}")
+            dpg.add_button(label="Remove", callback=__remove_btn_callback)
+            dpg.add_button(label="Reset", callback=__reset_graph_callback)
         dpg.add_drawlist(
             tag="canvas:main",
             pos=[PADDING]*2,
@@ -50,14 +53,16 @@ def __init_view():
 
 def __init_values():
     with dpg.value_registry():
-        dpg.add_float4_value(tag="val:mouse_position")
+        dpg.add_float4_value(tag="val:mouse_position", default_value=[0, 0, 0, 0])
+        dpg.add_string_value(tag="val:selected", default_value=None)
 
-def __init_input():
+def __init_handlers():
     with dpg.handler_registry():
         dpg.add_mouse_move_handler(callback=__mouse_move_callback)
         dpg.add_mouse_click_handler(callback=__mouse_click_callback)
     
 def __mouse_move_callback(sender, data):
+    # adjusting mouse position to padding
     dpg.set_value("val:mouse_position", list(map(lambda x: x-PADDING, dpg.get_mouse_pos())))
     dpg.configure_item("draw:selection", center=dpg.get_value("val:mouse_position")[:2])
 
@@ -69,14 +74,25 @@ def __mouse_click_callback(sender: str, data):
 
 def __vert_btn_callback(sender: str, data):
     print(f"[Vert Btn] Sender: {sender}, Data: {data}")
-    GRAPH.remove_vert(sender.split(":")[1])
+    dpg.set_value("val:selected", sender.split(":")[1])
+    print(f"[Selected] {dpg.get_value('val:selected')}")
+
+def __reset_graph_callback(sender, data):
+    GRAPH.clear()
     __update()
+
+def __remove_btn_callback(sender: str, data):
+    print(f"[Remove Btn] Sender: {sender}, Data: {data}")
+    if (selected := dpg.get_value("val:selected")) != None:
+        print(f"Trying to remove {selected}")
+        GRAPH.remove_vert(selected)
+        __update()
 
 def __update():
     for vert_key in GRAPH.vertices.union(ITEMS["vertices"]):
         if vert_key in GRAPH.vertices and vert_key not in ITEMS["vertices"]:
             ITEMS["vertices"].add(vert_key)
-            dpg.draw_circle(tag=f"vert:{vert_key}", parent="canvas:main", center=dpg.get_value("val:mouse_position")[:2], radius=5, color=(0, 255, 0, 255))
+            dpg.draw_circle(tag=f"vert:{vert_key}", parent="canvas:main", center=dpg.get_value("val:mouse_position")[:2], radius=5, fill=(0, 255, 0, 255))
             dpg.add_menu_item(tag=f"btn:{vert_key}", label=vert_key, parent="menu:vertices", callback=__vert_btn_callback)
         if vert_key not in GRAPH.vertices and vert_key in ITEMS["vertices"]:
             ITEMS["vertices"].remove(vert_key)
