@@ -38,7 +38,6 @@ def __init_view():
     ):
         with dpg.menu_bar():
             dpg.add_menu(tag="menu:vertices", label="Vertices")
-            dpg.add_text(f"Selected: {dpg.get_value('val:selected')}")
             dpg.add_button(label="Remove", callback=__remove_btn_callback)
             dpg.add_button(label="Reset", callback=__reset_graph_callback)
         dpg.add_drawlist(
@@ -55,7 +54,7 @@ def __init_view():
 def __init_values():
     with dpg.value_registry():
         dpg.add_float4_value(tag="val:mouse_position", default_value=[0, 0, 0, 0])
-        dpg.add_string_value(tag="val:selected", default_value=None)
+        dpg.add_string_value(tag="val:", default_value=None)
 
 def __init_handlers():
     with dpg.handler_registry():
@@ -71,7 +70,7 @@ def __mouse_click_callback(sender: str, data):
     print(f"[Mouse Click] Sender: {sender}, Data: {data}")
     if data == RIGHT_CLICK:
         GRAPH.add_vert(dpg.get_value("val:mouse_position")[:2])
-        __update()
+        __load_graph()
 
 def __vert_btn_callback(sender: str, data):
     print(f"[Vert Btn] Sender: {sender}, Data: {data}")
@@ -80,31 +79,30 @@ def __vert_btn_callback(sender: str, data):
     else:
         ITEMS["selected"].remove(selected)
     print(f"Selection: {ITEMS['selected']}")
-    __update()
+    __load_graph()
 
 def __reset_graph_callback(sender, data):
     GRAPH.clear()
-    __update()
+    __load_graph()
 
 def __remove_btn_callback(sender: str, data):
     print(f"[Remove Btn] Sender: {sender}, Data: {data}")
     if len(selection := ITEMS["selected"]) > 0:
-        print(f"Sel: {selection}")
         for vert_key in selection:
             GRAPH.remove_vert(vert_key)
-        __update()
+        __load_graph()
 
-def __update():
+def __load_graph():
     for vert_key in GRAPH.vertices.union(ITEMS["vertices"]):
         if vert_key in GRAPH.vertices and vert_key not in ITEMS["vertices"]:
             ITEMS["vertices"].add(vert_key)
             dpg.draw_circle(tag=f"vert:{vert_key}", parent="canvas:main", center=dpg.get_value("val:mouse_position")[:2], radius=5, fill=(0, 255, 0, 255))
             dpg.add_menu_item(tag=f"btn:{vert_key}", label=vert_key, parent="menu:vertices", callback=__vert_btn_callback)
         if vert_key not in GRAPH.vertices and vert_key in ITEMS["vertices"]:
-            ITEMS["vertices"].remove(vert_key)
             dpg.delete_item(f"vert:{vert_key}")
             dpg.delete_item(f"btn:{vert_key}")
-            ITEMS["selected"].remove(vert_key)
+            ITEMS["vertices"].remove(vert_key)
+            if vert_key in ITEMS["selected"]: ITEMS["selected"].remove(vert_key)
         if vert_key in ITEMS["selected"]:
             dpg.configure_item(f"vert:{vert_key}", fill=(255, 0, 0, 255))
 
