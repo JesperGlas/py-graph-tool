@@ -97,7 +97,7 @@ def __load_graph():
         if vert_key in GRAPH.vertices and vert_key not in ITEMS["vertices"]:
             ITEMS["vertices"].add(vert_key)
             dpg.draw_circle(tag=f"vert:{vert_key}", parent="canvas:main", center=dpg.get_value("val:mouse_position")[:2], radius=5, fill=(0, 255, 0, 255))
-            dpg.add_menu_item(tag=f"btn:{vert_key}", label=vert_key, parent="menu:vertices", callback=__vert_btn_callback)
+            dpg.add_checkbox(tag=f"btn:{vert_key}", label=vert_key, parent="menu:vertices", callback=__vert_btn_callback)
         if vert_key not in GRAPH.vertices and vert_key in ITEMS["vertices"]:
             dpg.delete_item(f"vert:{vert_key}")
             dpg.delete_item(f"btn:{vert_key}")
