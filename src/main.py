@@ -9,7 +9,7 @@ VIEW_WIDTH = 800
 VIEW_HEIGHT = 600
 ITEMS: Dict[str, set[str]] = {
     "vertices": set(),
-    "edges": Tuple[str, str],
+    "edges": set(),
     "selected": set()
 }
 
@@ -100,6 +100,7 @@ def __connect_btn_callback(sender: str, data):
             for dst in list(ITEMS["selected"])[i:]:
                 GRAPH.add_edge(src, dst)
     print(GRAPH)
+    __load_edges()
 
 def __load_graph():
     __load_vertices()
@@ -121,10 +122,11 @@ def __load_vertices():
 def __load_edges():
     for src_key, adjacent in GRAPH.edge_data.items():
         for dst_key in adjacent:
-            if (src_key, dst_key) not in ITEMS["edges"] and (dst_key, src_key) not in ITEMS["edges"]:
+            if (edge_key := GRAPH.edge_key(src_key, dst_key)) not in ITEMS["edges"] and GRAPH.edge_key(dst_key, src_key) not in ITEMS["edges"]:
+                ITEMS["edges"].add(edge_key)
                 src = GRAPH.get_pos(src_key)
                 dst = GRAPH.get_pos(dst_key)
-                dpg.draw_line(src, dst, color=(0, 0, 255, 255), thickness=1)
+                dpg.draw_line(src, dst, color=(0, 0, 255, 255), thickness=1, parent="canvas:main")
             
 
 def run():

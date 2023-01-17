@@ -48,6 +48,9 @@ class Graph:
         self.edge_data[vert_key] = set()
     
     def remove_vert(self, vert_key: str) -> None:
+        for src_key, adjacent in self.edge_data.items():
+            if vert_key in adjacent:
+                self.vert_data[src_key].remove(vert_key)
         if vert_key in self.vertices:
             del self.vert_data[vert_key]
             del self.edge_data[vert_key]
