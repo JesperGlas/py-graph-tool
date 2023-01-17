@@ -1,5 +1,5 @@
 import dearpygui.dearpygui as dpg
-from typing import Dict
+from typing import Dict, Tuple
 from Graph import Graph
 
 # global variables
@@ -9,7 +9,7 @@ VIEW_WIDTH = 800
 VIEW_HEIGHT = 600
 ITEMS: Dict[str, set[str]] = {
     "vertices": set(),
-    "edges": set(),
+    "edges": Tuple[str, str],
     "selected": set()
 }
 
@@ -38,8 +38,10 @@ def __init_view():
     ):
         with dpg.menu_bar():
             dpg.add_menu(tag="menu:vertices", label="Vertices")
+            dpg.add_button(label="Connect", callback=__connect_btn_callback)
             dpg.add_button(label="Remove", callback=__remove_btn_callback)
             dpg.add_button(label="Reset", callback=__reset_graph_callback)
+            dpg.add_menu(tag="menu:edges", label="Edges")
         dpg.add_drawlist(
             tag="canvas:main",
             pos=[PADDING]*2,
@@ -78,7 +80,6 @@ def __vert_btn_callback(sender: str, data):
         ITEMS["selected"].add(selected)
     else:
         ITEMS["selected"].remove(selected)
-    print(f"Selection: {ITEMS['selected']}")
     __load_graph()
 
 def __reset_graph_callback(sender, data):
@@ -92,7 +93,18 @@ def __remove_btn_callback(sender: str, data):
             GRAPH.remove_vert(vert_key)
         __load_graph()
 
+def __connect_btn_callback(sender: str, data):
+    print(f"[Connect Btn] Sender: {sender}, Data: {data}")
+    if len(ITEMS["selected"]) >= 2:
+        for i, src in enumerate(ITEMS["selected"]):
+            for dst in list(ITEMS["selected"])[i:]:
+                GRAPH.add_edge(src, dst)
+    print(GRAPH)
+
 def __load_graph():
+    __load_vertices()
+
+def __load_vertices():
     for vert_key in GRAPH.vertices.union(ITEMS["vertices"]):
         if vert_key in GRAPH.vertices and vert_key not in ITEMS["vertices"]:
             ITEMS["vertices"].add(vert_key)
@@ -105,6 +117,15 @@ def __load_graph():
             if vert_key in ITEMS["selected"]: ITEMS["selected"].remove(vert_key)
         if vert_key in ITEMS["selected"]:
             dpg.configure_item(f"vert:{vert_key}", fill=(255, 0, 0, 255))
+
+def __load_edges():
+    for src_key, adjacent in GRAPH.edge_data.items():
+        for dst_key in adjacent:
+            if (src_key, dst_key) not in ITEMS["edges"] and (dst_key, src_key) not in ITEMS["edges"]:
+                src = GRAPH.get_pos(src_key)
+                dst = GRAPH.get_pos(dst_key)
+                dpg.draw_line(src, dst, color=(0, 0, 255, 255), thickness=1)
+            
 
 def run():
     dpg.start_dearpygui()
